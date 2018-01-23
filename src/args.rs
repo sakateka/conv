@@ -1,0 +1,30 @@
+use clap::{App, Arg, ArgMatches, SubCommand};
+
+pub fn build_app<'a>(name: &str) -> ArgMatches<'a> {
+    App::new(name)
+        .version("0.1.0")
+        .author("Sergey K. <uo0@ya.ru>")
+        .about("Корвертер текстов между KOI-8, CP1251, DOS и UNICODE")
+        .arg(Arg::with_name("from encode")
+            .short("f")
+            .long("from")
+            .required(true)
+            .takes_value(true)
+            .help("Кодировка источника"))
+        .arg(Arg::with_name("to encode")
+            .short("t")
+            .long("to")
+            .required(true)
+            .takes_value(true)
+            .help("Кодировка результата"),
+        )
+        .arg(Arg::with_name("output")
+            .short("o")
+            .long("output")
+            .takes_value(true)
+            .help("Имя фала для записи результата")
+        )
+        .arg(Arg::with_name("SOURCE")
+             .help("Файл для конвертации")
+        ).get_matches()
+}
