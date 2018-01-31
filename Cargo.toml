@@ -2,6 +2,7 @@
 name = "conv"
 version = "0.1.0"
 authors = ["Sergey Kacheev <uo0@ya.ru>"]
+build = "build.rs"
 
 [dependencies]
 clap = "2.29.*"

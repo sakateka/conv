@@ -1,9 +1,13 @@
 extern crate clap;
 mod args;
 mod conv;
-mod charmap;
+//mod charmap;
 
 fn main() {
     let app = args::build_app("conv");
-    println!("Hello, world! {:?}", app);
+    let input = app.value_of("SOURCE").unwrap_or_else(|| {"/dev/stdin"});
+    let output = app.value_of("output").unwrap_or_else(|| {"/dev/stdout"});
+    let safely = app.is_present("safely");
+
+    println!("Hello, world! {} -> {} : {}", input, output, safely);
 }
