@@ -1,8 +1,10 @@
 extern crate clap;
+extern crate byteorder;
 
 #[macro_use]
 extern crate lazy_static;
 
+use std::fs::File;
 mod args;
 mod conv;
 //mod charmap;
@@ -13,5 +15,12 @@ fn main() {
     let output = app.value_of("output").unwrap_or_else(|| {"/dev/stdout"});
     let safely = app.is_present("safely");
 
-    println!("Hello, world! {} -> {} : {}", input, output, safely);
+    let from_code = app.value_of("from").unwrap();
+    let to_code = app.value_of("to").unwrap();
+
+    let converter = conv::Converter::new(from_code, to_code);
+    let input_stream = File::open(input).unwrap();
+    let output_stream = File::create(output).unwrap();
+
+    converter.convert(input_stream, output_stream);
 }

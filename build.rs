@@ -32,9 +32,9 @@ fn main() {
 }
 
 fn build_map(from: &str, to: &str, content: &String, out: &mut File) {
-    let (size_from, size_to) = if from == "utf8" { (16, 8) } else { (8, 16) };
+    let (size_from, size_to) = if from == "utf8" { ("u32", "u8") } else { ("u8", "u32") };
     out.write_fmt(format_args!(
-        "lazy_static! {{\nstatic ref {}_TO_{}: HashMap<u{}, u{}> = [",
+        "lazy_static! {{\nstatic ref {}_TO_{}: HashMap<{}, {}> = [",
         from.to_uppercase(), to.to_uppercase(), size_from, size_to
     )).unwrap();
 
@@ -51,12 +51,17 @@ fn build_map(from: &str, to: &str, content: &String, out: &mut File) {
         let codes: Vec<&str> = line.splitn(2, '#').collect();
         let mut fields = codes[0].split_whitespace();
         let code = fields.next().unwrap();
-        let utf8 = fields.next().unwrap_or("0xfffd");
-
+        let utf8_opt = fields.next();
         if from == "utf8" {
-            out.write_fmt(format_args!("({}, {}), ", utf8, code)).unwrap();
+            match utf8_opt {
+                Some(x) => {
+                    out.write_fmt(format_args!("({}, {}), ", x, code)).unwrap();
+                },
+                _ => (),
+            };
         } else {
-            out.write_fmt(format_args!("({}, {}), ", code, utf8)).unwrap();
+            let x = utf8_opt.unwrap_or("0xfffd");
+            out.write_fmt(format_args!("({}, {}), ", code, x)).unwrap();
         }
     }
 
@@ -65,7 +70,7 @@ fn build_map(from: &str, to: &str, content: &String, out: &mut File) {
 
 fn build_decode_map_selector(tables: &Vec<String>, out: &mut File) {
     out.write(b"\n\
-        fn get_decode_map(from: &str) -> Option<&'static HashMap<u8, u16>> {\n\
+        fn get_decode_map(from: &str) -> Option<&'static HashMap<u8, u32>> {\n\
             \tmatch from.to_uppercase().as_ref() {\n\
     ").unwrap();
 
@@ -75,13 +80,17 @@ fn build_decode_map_selector(tables: &Vec<String>, out: &mut File) {
         )).unwrap();
     }
 
-    out.write(b"\n\t\t_ => None,\n\t}\n}").unwrap();
+    out.write(b"\n\t\t\"UTF8\"=> None,\n").unwrap();
+    out.write(b"\n\t\t_ => unimplemented!(\
+            \"decode from {} not supported yet!\", from\
+        ),\n\t}\n}"
+    ).unwrap();
 }
 
 fn build_encode_map_selector(tables: &Vec<String>, out: &mut File) {
     out.write(b"\n\
-        fn get_encode_map(from: &str) -> Option<&'static HashMap<u16, u8>> {\n\
-            \tmatch from.to_uppercase().as_ref() {\n\
+        fn get_encode_map(to: &str) -> Option<&'static HashMap<u32, u8>> {\n\
+            \tmatch to.to_uppercase().as_ref() {\n\
     ").unwrap();
 
     for k in tables {
@@ -90,5 +99,9 @@ fn build_encode_map_selector(tables: &Vec<String>, out: &mut File) {
         )).unwrap();
     }
 
-    out.write(b"\n\t\t_ => None,\n\t}\n}").unwrap();
+    out.write(b"\n\t\t\"UTF8\"=> None,\n").unwrap();
+    out.write(b"\n\t\t_ => unimplemented!(\
+            \"encode to {} not supported yet!\", to\
+        ),\n\t}\n}"
+    ).unwrap();
 }
