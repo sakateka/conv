@@ -52,22 +52,16 @@ impl <R: Read + BufRead> Iterator for Decoder<R> {
                 }
                 match self.map {
                     Some(m) => {
-                        for b in buf.iter() {
+                        for b in buf {
                             if let Some(x) = m.get(b) {
                                 self.buf.push(*x);
                             }
                         }
                     },
                     None => {
-                        let string = String::from_utf8_lossy(buf);
-                        for c in string.chars() {
-                            let key = c as u32;
-                            if key < 0xffff_u32 {
-                                self.buf.push(key);
-                            } else {
-                                self.buf.push(0xfffd);
-                            };
-                        }
+                        self.buf.extend(
+                            String::from_utf8_lossy(buf).chars().map(|c| { c as u32 })
+                        );
                     },
                 }
                 self.buf_len = self.buf.len();
