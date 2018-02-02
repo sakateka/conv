@@ -2,24 +2,23 @@
 use std::char;
 use std::io::{BufRead, Read, BufReader, BufWriter, Write};
 use byteorder::{WriteBytesExt};
-use std::ops::Deref;
 use std::collections::HashMap;
 
 include!(concat!(env!("OUT_DIR"), "/charmaps.rs"));
 
-#[derive(Debug)]
 pub struct Converter {
+    encode: bool,
     from: String,
-    to: Option<&'static HashMap<u32, u8>>,
+    mapper: Box<Fn(u32) -> Option<&'static u8>>,
 }
 
-#[derive(Debug)]
 pub struct Decoder<R> {
     r: R,
     index: usize,
     buf_len: usize,
     buf: Vec<u32>,
-    map: Option<&'static HashMap<u8, u32>>,
+    decode: bool,
+    mapper: Box<Fn(usize) -> u32>,
 }
 
 impl <R: Read + BufRead> Decoder<R> {
@@ -29,7 +28,8 @@ impl <R: Read + BufRead> Decoder<R> {
             index: 0,
             buf_len: 0,
             buf: Vec::new(),
-            map: get_decode_map(code),
+            decode: code != "utf8",
+            mapper: get_decode_map(code),
         }
     }
 }
@@ -50,20 +50,16 @@ impl <R: Read + BufRead> Iterator for Decoder<R> {
                 if length == 0 {
                     return None
                 }
-                match self.map {
-                    Some(m) => {
-                        for b in buf {
-                            if let Some(x) = m.get(b) {
-                                self.buf.push(*x);
-                            }
-                        }
-                    },
-                    None => {
-                        self.buf.extend(
-                            String::from_utf8_lossy(buf).chars().map(|c| { c as u32 })
-                        );
-                    },
+                if self.decode {
+                    for b in buf {
+                        self.buf.push((self.mapper)(*b as usize));
+                    }
+                } else {
+                    self.buf.extend(
+                        String::from_utf8_lossy(buf).chars().map(|c| { c as u32 })
+                    );
                 }
+
                 self.buf_len = self.buf.len();
                 self.index = 0;
                 Some(self.buf[self.index])
@@ -78,8 +74,9 @@ impl <R: Read + BufRead> Iterator for Decoder<R> {
 impl Converter {
     pub fn new(from_code: &str, to_code: &str) -> Converter {
         Converter {
+            encode: &to_code[..] != "utf8",
             from: from_code.to_owned(),
-            to: get_encode_map(to_code),
+            mapper: get_encode_map(to_code),
         }
     }
     pub fn convert<R: Read, W: Write>(&self, src: R, dst: W) where R: Sized {
@@ -89,18 +86,10 @@ impl Converter {
         let mut buf_dst = BufWriter::with_capacity(one_mb, dst);
         let decoder = Decoder::new(buf_src, &self.from);
 
-        let encode = !self.to.is_none();
-        let mut map = &HashMap::new();
-        if encode {
-            map = self.to.unwrap();
-        }
         for key in decoder {
-            if encode {
-                match map.get(&key) {
-                    Some(x) => buf_dst.write_u8(*x).unwrap(),
-                    None => buf_dst.write_u8(b'?').unwrap(),
-                };
-            }else {
+            if self.encode {
+                buf_dst.write_u8(*(self.mapper)(key).unwrap_or(&b'?')).unwrap();
+            } else {
                 buf_dst.write_fmt(format_args!("{}", char::from_u32(key).unwrap())).unwrap();
             }
         }
