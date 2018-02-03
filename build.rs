@@ -33,6 +33,11 @@ fn main() {
     build_encoder_selector(&char_tables, &mut charmaps);
     build_decoder_selector(&char_tables, &mut charmaps);
 
+    charmaps.write_fmt(format_args!(
+        "lazy_static! {{\n\
+            \tpub static ref SUPPORTED_CODES: Vec<&'static str> = vec!{:?};\n\
+        }}", char_tables
+   )).unwrap();
 }
 
 fn parse_tab(content: &String) -> Vec<(String, Option<String>)> {

@@ -1,10 +1,16 @@
 use clap::{App, Arg, ArgMatches};
+use conv;
+use std::ops::Deref;
 
 pub fn build_app<'a>(name: &str) -> ArgMatches<'a> {
     App::new(name)
         .version("0.1.0")
         .author("Sergey Kacheev <uo0@ya.ru>")
-        .about("Корвертер текстов между KOI-8, CP1251, DOS и UNICODE")
+        .about(format!(
+                    "Корвертер текстов между кодировками {:?}",
+                    conv::SUPPORTED_CODES.deref()
+                ).as_ref()
+        )
         .arg(Arg::with_name("from")
             .short("f")
             .long("from")
