@@ -20,11 +20,11 @@ fn main() {
 
     let converter = conv::Converter::new(from_code, to_code);
     let input_stream = File::open(input).unwrap();
-    let output_stream = File::create(output).unwrap();
+    let mut output_stream = File::create(output).unwrap();
     let mut replace = b'?';
     if let Some(r) = app.value_of("replace") {
         replace = r.as_bytes()[0];
     }
 
-    converter.convert(input_stream, output_stream, safely, replace);
+    converter.convert(input_stream, &mut output_stream, safely, replace);
 }
