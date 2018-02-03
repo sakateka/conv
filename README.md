@@ -21,3 +21,4 @@ sys	0m0.032s
 conv (master) λ md5sum -c <<<"$(md5sum ../iconv.result|sed 's/iconv/conv/')"
 ../conv.result: OK
 ```
+![2018-02-04_00 08 53](https://user-images.githubusercontent.com/2256154/35769624-3b0bd84e-0940-11e8-8c41-88aa94c3fecc.png)
