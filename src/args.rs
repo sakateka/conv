@@ -4,7 +4,7 @@ use std::ops::Deref;
 
 pub fn build_app<'a>(name: &str) -> ArgMatches<'a> {
     App::new(format!("{} - Конвертер кодировок текста", name).as_ref())
-        .version("0.1.0")
+        .version("1.0.0")
         .author("Sergey Kacheev <uo0@ya.ru>")
         .about(
             format!("\n\
