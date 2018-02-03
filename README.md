@@ -17,7 +17,7 @@ conv (master) λ time target/release/conv -f cp1251 -t utf8 ../big.txt -o ../con
 real	0m0.950s
 user	0m0.917s
 sys	0m0.032s
-conv (master) λ md5sum ../*conv.result
-2d085340c12689a5586ec26163ade7ba  ../conv.result
-2d085340c12689a5586ec26163ade7ba  ../iconv.result
+
+conv (master) λ md5sum -c <<<"$(md5sum ../iconv.result|sed 's/iconv/conv/')"
+../conv.result: OK
 ```
