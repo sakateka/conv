@@ -20,4 +20,16 @@ sys	0m0.032s
 
 conv (master) λ md5sum -c <<<"$(md5sum ../iconv.result|sed 's/iconv/conv/')"
 ../conv.result: OK
+
+conv (master) λ /usr/bin/time -v iconv -c -f cp1251 -t utf8 ../1g.txt -o /dev/null
+	...
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.09
+	Maximum resident set size (kbytes): 1046644
+	...
+conv (master) λ /usr/bin/time -v target/release/conv -f cp1251 -t utf8 ../1g.txt -o /dev/null 
+	...
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:32.92
+	Maximum resident set size (kbytes): 10808
+	...
 ```
+![2018-02-04_00 08 53](https://user-images.githubusercontent.com/2256154/35769624-3b0bd84e-0940-11e8-8c41-88aa94c3fecc.png)
