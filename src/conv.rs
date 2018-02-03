@@ -6,12 +6,6 @@ use std::collections::HashMap;
 
 include!(concat!(env!("OUT_DIR"), "/charmaps.rs"));
 
-pub struct Converter {
-    encode: bool,
-    from: String,
-    mapper: Box<Fn(u32) -> Option<&'static u8>>,
-}
-
 pub struct Decoder<R> {
     r: R,
     index: usize,
@@ -71,6 +65,12 @@ impl <R: Read + BufRead> Iterator for Decoder<R> {
     }
 }
 
+pub struct Converter {
+    encode: bool,
+    from: String,
+    mapper: Box<Fn(u32) -> Option<&'static u8>>,
+}
+
 impl Converter {
     pub fn new(from_code: &str, to_code: &str) -> Converter {
         Converter {
@@ -79,7 +79,7 @@ impl Converter {
             mapper: get_encode_map(to_code),
         }
     }
-    pub fn convert<R: Read, W: Write>(&self, src: R, dst: W) where R: Sized {
+    pub fn convert<R: Read, W: Write>(&self, src: R, dst: W, safely: bool, replace: u8) where R: Sized {
 
         let one_mb = 1_usize << 20;
         let buf_src = BufReader::with_capacity(one_mb, src);
@@ -88,7 +88,12 @@ impl Converter {
 
         for key in decoder {
             if self.encode {
-                buf_dst.write_u8(*(self.mapper)(key).unwrap_or(&b'?')).unwrap();
+                buf_dst.write_u8(*(self.mapper)(key).unwrap_or({
+                    if safely {
+                        panic!("illegal input sequence '{:#x}'", key);
+                    }
+                    &replace
+                })).unwrap();
             } else {
                 buf_dst.write_fmt(format_args!("{}", char::from_u32(key).unwrap())).unwrap();
             }
