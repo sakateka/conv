@@ -3,13 +3,18 @@ use conv;
 use std::ops::Deref;
 
 pub fn build_app<'a>(name: &str) -> ArgMatches<'a> {
-    App::new(name)
+    App::new(format!("{} - Конвертер кодировок текста", name).as_ref())
         .version("0.1.0")
         .author("Sergey Kacheev <uo0@ya.ru>")
-        .about(format!(
-                    "Корвертер текстов между кодировками {:?}",
-                    conv::SUPPORTED_CODES.deref()
-                ).as_ref()
+        .about(
+            format!("\n\
+                Корвертер текстов между кодировками {:?}\n\
+                По умолчанию утилита читает stdin и выводит результат на stdout\n\
+                Если указан флаг 'safety', то при первой ошибке декодирования\n\
+                символа источника утилита завершает свою работу.
+                ",
+                conv::SUPPORTED_CODES.deref()
+            ).as_ref()
         )
         .arg(Arg::with_name("from")
             .short("f")
